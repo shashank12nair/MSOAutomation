@@ -2,7 +2,7 @@
 from operator import truediv
 
 import pyvisa
-import socket
+# import socket
 
 visaRsrcAddrTcpIP = "TCPIP0::192.168.0.2::inst0::INSTR" # Visa resource address for TCP/IP interface
 visaRsrcAddrUsb = "USB::0x0699::0x0528::C015032::INSTR" # Visa resource address for USB interface

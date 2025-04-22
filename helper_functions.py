@@ -4,7 +4,7 @@ from mso_comm import *
 
 from datetime import datetime  # std library
 from pathlib import Path
-import pandas as pd
+# import pandas as pd
 
 # For tcpip and usb comm. based on pyvisa
 def write(command):

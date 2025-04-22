@@ -4,7 +4,7 @@ from operator import truediv
 import pyvisa
 import socket
 
-visaRsrcAddrTcpIP = "TCPIP::192.168.0.5::INSTR" # Visa resource address for TCP/IP interface
+visaRsrcAddrTcpIP = "TCPIP0::192.168.0.2::inst0::INSTR" # Visa resource address for TCP/IP interface
 visaRsrcAddrUsb = "USB::0x0699::0x0528::C015032::INSTR" # Visa resource address for USB interface
 msoIpAddr = "192.168.0.2"
 msoSocketPort = 4000
@@ -16,8 +16,9 @@ UsbInterfaceFailed = False
 SocketInterfaceFailed = False
 
 rm = pyvisa.ResourceManager()
-scope = rm.open_resource(visaRsrcAddrTcpIP)
+print(rm.list_resources())
 
+# scope = rm.open_resource(visaRsrcAddrTcpIP)
 # global scope
 #
 print("Interfacing with TCP/IP\n")
@@ -50,7 +51,7 @@ if not TcpInterfaceFailed or not UsbInterfaceFailed:
 else:
     print("Both interfacing options failed.\r\nCheck if the resource addresses is correct.\r\nCheck if the instrument is connected to pc using either ethernet cable or USB 3.0 cable\r\n")
 
-    # print("Trying with socket communication\n")
+    # print("Trying with socket communication\n")a
     #
     # try:
     #     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create a socket and connect to the mso

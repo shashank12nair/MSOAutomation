@@ -1,6 +1,10 @@
+import time
+
 from mso_comm import *
 
 from datetime import datetime  # std library
+from pathlib import Path
+import pandas as pd
 
 # For tcpip and usb comm. based on pyvisa
 def write(command):
@@ -29,22 +33,12 @@ def read_raw(size):
         print("Query operation failed.Try again.\r\n")
         return
 
-# For socket comm
-def write_socket(command):
-    try:
-        sock.sendall((command + "\n").encode()) #send command
-        response = sock.recv(4096).decode().strip()
-        return response
-    except:
-        print("socket write operation failed.Try again.\r\n")
-        return
-
 
 def capture_image():
     write('SAVE:IMAGe \"C:/Temp.png\"')    # Save image to instrument's local disk
 
     dt = datetime.now()    # Generate a filename based on the current Date & Time
-    fileName = dt.strftime("C:/Users/seema/PycharmProjects/MSOAutomation/Images/IMG_%Y%m%d_%H%M%S.png")
+    fileName = dt.strftime("D:/pythonProjects/MSOAutomation/Images/IMG_%Y%m%d_%H%M%S.png")
 
     query('*OPC?')# Wait for instrument to finish writing image to disk
 
@@ -59,7 +53,130 @@ def capture_image():
     print("Image captured successfully\r\n")
 
 
+def transfer_file(src_path, dstn_path, delete_file = False):
+    dt = datetime.now()  # Generate a filename based on the current Date & Time
+    fileName = dt.strftime(str(dstn_path) + str(Path(src_path).name))
+
+
+    write('FILESystem:READFile \"' + str(src_path) + "\"") # Read image file from instrument
+    imgData = read_raw(1024 * 1024)
+
+    file = open(fileName, "wb")  # Save image data to local disk
+    file.write(imgData)
+    file.close()
+    query('*OPC?')
+
+    # with open(fileName, "r") as file:
+    #     lines = file.readlines()
+    #
+    # # Identify the row where "Labels" appears
+    # data_start_row = next((i for i, line in enumerate(lines) if "Labels" in line), None)
+    #
+    # # Identify the actual data start row (row after labels)
+    # data_start_row += 2  # The actual data starts two rows below "Labels"
+    #
+    # # Read the CSV using Pandas while keeping metadata
+    # metadata = lines[:data_start_row]  # Preserve metadata
+    # waveform_df = pd.read_csv(fileName, skiprows=data_start_row, header=None)
+    #
+    # # Assign column names dynamically using the row below "Labels"
+    # column_names = lines[data_start_row - 1].strip().split(",")
+    # waveform_df.columns = column_names
+    #
+    # # Convert to numeric values
+    # waveform_df = waveform_df.apply(pd.to_numeric, errors='coerce')
+    #
+    # # Filter data between -80 ns to 80 ns
+    # time_window = (waveform_df["TIME"] >= -80e-9) & (waveform_df["TIME"] <= 80e-9)
+    # filtered_df = waveform_df[time_window]
+    #
+    # # Merge metadata with the filtered waveform data
+    # final_csv_content = "".join(metadata) + filtered_df.to_csv(index=False, header=False)
+    #
+    # # Save final filtered file
+    # with open(fileName, "w", newline='') as file:
+    #     file.write(final_csv_content)
+    #
+    # print(f"Filtered waveform data saved at: {fileName}")
+
+    if delete_file:
+        write('FILESystem:DELEte \"C:/Temp.png\"') # Image data has been transferred to PC and saved. Delete image file from instrument's hard disk.
+
+    print("file transferred successfully\r\n")
+
+
+def find_matching_files(prefix):
+    """Retrieve all filenames from the oscilloscope that start with the given prefix."""
+    file_list = query("FILESystem:DIR?")  # Get file list from oscilloscope
+    files = file_list.split(",")  # Convert response into a list
+
+    matching_files = []
+    # Find files that start with the prefix
+    for file in files:
+        replaced_file = file.strip().replace('"', '')
+        if replaced_file.startswith(prefix):
+            matching_files.append(replaced_file)  # Append to the list
+            print(replaced_file)
+
+    return matching_files
+
 def get_measurement(num):
     val = query("MEASU:MEAS" + str(num) + ":VAL?")
     # print(str(val) + "\r\n")
     return val
+
+def save_waveforms_on_trigger():
+
+    # Set the file format
+    write(" SAVEON:WAVEform:FILEFormat internal")#internal/spreadsheet
+    # Set the save location
+    write('SAVEON:FILE:DEST "C:/"')
+    # Set the filename
+    write('SAVEON:FILE:NAME "TriggerEventWaveform_internal"')
+
+    write("SAVEON:WAVEform:SOURce ALL")
+
+    # write("ACTONEVent:LIMit 1") #turns on limit on acquisition
+
+    # write("ACTONEVent:LIMITCount " + str(num)) # limit count
+
+    # Enable saving the waveform when a trigger event occurs
+    write("ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE ON")
+
+    write("ACTONEVent:ENable 1") # enables act on event
+
+    # time.sleep(30)
+
+    query("*OPC?")
+
+    # write("ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE OFF")
+    #
+    # write("ACTONEVent:ENable 0") # enables act on event
+
+    print("Done\r\n")
+
+
+def stop_waveform_saving():
+    query("*OPC?")
+
+    write("ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE OFF")
+
+    write("ACTONEVent:ENable 0") # enables act on event
+
+    print("waveform saving stopped\r\n")
+
+
+def retrieve_waveforms():
+
+    waveform_files = find_matching_files("TriggerEventWaveform_internal")
+    for file in waveform_files:
+        transfer_file("c:/" + str(file), "D:/pythonProjects/MSOAutomation/data/wfrm_data_21_4/")
+        time.sleep(1)
+
+    print("transfer completed")
+
+def end():
+    scope.close()
+    rm.close()
+
+

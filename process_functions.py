@@ -3,6 +3,7 @@ from helper_functions import *
 import csv
 import time
 
+
 def get_amplitude_data(measNum, min = 1):
 
     dt = datetime.now()  # Generate a filename based on the current Date & Time

@@ -125,33 +125,31 @@ def get_measurement(num):
     # print(str(val) + "\r\n")
     return val
 
-def save_waveforms_on_trigger():
+def save_waveforms_on_trigger(format_choice: str = "internal", series_number: int = 1):
+    format_choice = format_choice.strip().lower()
+
+    if format_choice not in ["internal", "spreadsheet"]:
+        print(f"Invalid format '{format_choice}'. Defaulting to 'internal'.")
+        format_choice = "internal"
 
     # Set the file format
-    write(" SAVEON:WAVEform:FILEFormat internal")#internal/spreadsheet
+    write(f"SAVEON:WAVEform:FILEFormat {format_choice}")
+
     # Set the save location
     write('SAVEON:FILE:DEST "C:/"')
-    # Set the filename
-    write('SAVEON:FILE:NAME "TriggerEventWaveform_internal"')
+
+    # Set the filename with series number
+    filename = f"TriggerEventWaveform_{format_choice}_{series_number}"
+    write(f'SAVEON:FILE:NAME "{filename}"')
 
     write("SAVEON:WAVEform:SOURce ALL")
-
-    # write("ACTONEVent:LIMit 1") #turns on limit on acquisition
-
-    # write("ACTONEVent:LIMITCount " + str(num)) # limit count
 
     # Enable saving the waveform when a trigger event occurs
     write("ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE ON")
 
     write("ACTONEVent:ENable 1") # enables act on event
 
-    # time.sleep(30)
-
     query("*OPC?")
-
-    # write("ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE OFF")
-    #
-    # write("ACTONEVent:ENable 0") # enables act on event
 
     print("Done\r\n")
 
@@ -166,14 +164,16 @@ def stop_waveform_saving():
     print("waveform saving stopped\r\n")
 
 
-def retrieve_waveforms():
+def retrieve_waveforms(base_filename: str):
+    waveform_files = find_matching_files(base_filename)
 
-    waveform_files = find_matching_files("TriggerEventWaveform_internal")
     for file in waveform_files:
-        transfer_file("c:/" + str(file), "D:/pythonProjects/MSOAutomation/data/wfrm_data_21_4/")
+        source_path = "C:/" + str(file)
+        dest_path = "D:/pythonProjects/MSOAutomation/data/"
+        transfer_file(source_path, dest_path)
         time.sleep(1)
 
-    print("transfer completed")
+    print("Transfer completed.\n")
 
 def end():
     scope.close()

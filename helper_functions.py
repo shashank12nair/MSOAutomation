@@ -53,7 +53,7 @@ def capture_image():
     print("Image captured successfully\r\n")
 
 
-def transfer_file(src_path, dstn_path, delete_file = False):
+def transfer_file(src_path, dstn_path, delete_file = True):
     dt = datetime.now()  # Generate a filename based on the current Date & Time
     fileName = dt.strftime(str(dstn_path) + str(Path(src_path).name))
 
@@ -100,7 +100,7 @@ def transfer_file(src_path, dstn_path, delete_file = False):
     # print(f"Filtered waveform data saved at: {fileName}")
 
     if delete_file:
-        write('FILESystem:DELEte \"C:/Temp.png\"') # Image data has been transferred to PC and saved. Delete image file from instrument's hard disk.
+        write(f'FILESystem:DELEte \"{src_path}\"') # Image data has been transferred to PC and saved. Delete image file from instrument's hard disk.
 
     print("file transferred successfully\r\n")
 
@@ -125,7 +125,7 @@ def get_measurement(num):
     # print(str(val) + "\r\n")
     return val
 
-def save_waveforms_on_trigger(format_choice: str = "internal", series_number: int = 1):
+def save_waveforms_on_trigger(format_choice: str = "internal", series_number: int = 1, retry_count: int = 1):
     format_choice = format_choice.strip().lower()
 
     if format_choice not in ["internal", "spreadsheet"]:
@@ -139,7 +139,7 @@ def save_waveforms_on_trigger(format_choice: str = "internal", series_number: in
     write('SAVEON:FILE:DEST "C:/"')
 
     # Set the filename with series number
-    filename = f"TriggerEventWaveform_{format_choice}_{series_number}"
+    filename = f"TriggerEventWaveform_{format_choice}_{series_number}_{retry_count}"
     write(f'SAVEON:FILE:NAME "{filename}"')
 
     write("SAVEON:WAVEform:SOURce ALL")
@@ -164,13 +164,12 @@ def stop_waveform_saving():
     print("waveform saving stopped\r\n")
 
 
-def retrieve_waveforms(base_filename: str):
+def retrieve_waveforms(base_filename: str, final_dest_folder: str):
     waveform_files = find_matching_files(base_filename)
 
     for file in waveform_files:
         source_path = "C:/" + str(file)
-        dest_path = "D:/pythonProjects/MSOAutomation/data/"
-        transfer_file(source_path, dest_path)
+        transfer_file(source_path, final_dest_folder)
         time.sleep(1)
 
     print("Transfer completed.\n")

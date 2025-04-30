@@ -94,6 +94,6 @@ def convert_wfm_to_npz(input_folder, show_plot=False):
         except Exception as e:
             print(f"[ERROR] Failed to process {wfm_file}: {e}")
 
-if __name__ == "__main__":
-    folder = input("Enter the path to the folder containing .wfm files: ").strip('"')
-    convert_wfm_to_npz(folder, show_plot=False)# make this true if you want to see plot of individual files.
+# if __name__ == "__main__":
+#     folder = input("Enter the path to the folder containing .wfm files: ").strip('"')
+#     convert_wfm_to_npz(folder, show_plot=False)# make this true if you want to see plot of individual files.

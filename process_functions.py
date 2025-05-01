@@ -47,8 +47,9 @@ def coincidence_counter(npz_folder: str, channel_number: int, threshold: float =
             try:
                 data = np.load(npz_path)
                 voltage = data['voltage']
+                voltage_trimmed = voltage[:10000]
 
-                if np.max(voltage) > threshold:
+                if np.max(voltage_trimmed) > threshold:
                     pulse_present_counter += 1
 
             except Exception as e:
@@ -58,6 +59,40 @@ def coincidence_counter(npz_folder: str, channel_number: int, threshold: float =
     print(f"Total trigger events: {total_trigger_counter}")
     print(f"Total num. of 3 fold coincidence: {pulse_present_counter}\n")
     return total_trigger_counter, pulse_present_counter
+
+
+def soft_ltd(npz_folder: str, channel_number: int, threshold: float = 0.2):
+    total_trigger_counter = 0
+    pulse_present_counter = 0
+    ch_str = f"ch{channel_number}"
+
+    # List all .npz files
+    npz_files = [f for f in os.listdir(npz_folder) if f.lower().endswith(".npz")]
+
+    if not npz_files:
+        print("No .npz files found in the specified folder.")
+        return
+
+    for npz_file in npz_files:
+        if ch_str in npz_file.lower():
+            total_trigger_counter += 1
+            npz_path = os.path.join(npz_folder, npz_file)
+            try:
+                data = np.load(npz_path)
+                voltage = data['voltage']
+                voltage_trimmed = voltage[:10000]
+
+                if np.max(abs(voltage_trimmed)) > threshold:
+                    pulse_present_counter += 1
+
+            except Exception as e:
+                print(f"[ERROR] Failed to process {npz_file}: {e}")
+
+    print("\n[RESULT]")
+    print(f"Total trigger events: {total_trigger_counter}")
+    print(f"Total pulses above threshold: {pulse_present_counter}\n")
+    return total_trigger_counter, pulse_present_counter
+
 
 
 def main():

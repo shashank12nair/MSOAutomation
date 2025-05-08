@@ -134,7 +134,13 @@ def main():
         channel_num = 4
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    dest_base_path = "D:/pythonProjects/MSOAutomation/data"  # base data folder
+
+    dest_base_path = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data'))
+
+    # Create the directory if it doesn't exist
+    os.makedirs(dest_base_path, exist_ok=True)
+
+    # dest_base_path = "D:/pythonProjects/MSOAutomation/data"  # base data folder
     dest_base_path = os.path.join(dest_base_path, f"wfrm_data_series{series_number}_{timestamp}/")
     for i in range(retry_count):
         # Start waveform saving
@@ -166,7 +172,6 @@ def main():
         # path to npz file folder
         npz_files_path = os.path.join(final_dest_folder, f"converted_npz/")
 
-
         total_trigger_counter, pulse_present_counter = coincidence_counter(npz_files_path, channel_num)
 
         csv_file = os.path.join(dest_base_path, "coincidence_summary.csv")
@@ -181,4 +186,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    end()
+    end()   
